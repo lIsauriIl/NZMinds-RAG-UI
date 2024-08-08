@@ -9,4 +9,6 @@ Git clone the repo via ```git clone https://github.com/lIsauriIl/NZMinds-RAG-UI`
 Carry out the following command: ```pip install -r requirements.txt```.
 
 # Running the program
-On the command line, run ```streamlit run chatbot_app.py```
+First, run nzminds_chunk_vecdb.py. This will take a while since it's done on local hardware.
+
+Then on the command line, run ```streamlit run chatbot_app.py```
