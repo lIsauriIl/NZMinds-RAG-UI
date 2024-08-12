@@ -2,7 +2,7 @@ from langchain_chroma import Chroma
 from langchain_community.chat_models import ChatOllama
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain_community.cross_encoders import HuggingFaceCrossEncoder
@@ -11,12 +11,6 @@ from langchain.vectorstores.base import VectorStoreRetriever
 from langchain_core.messages import HumanMessage, AIMessage
 import os, getpass
 import extra_context
-
-# Setting up Langsmith environment
-# api key: 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
-#os.environ["LANGCHAIN_TRACING_V2"] = "true"
-#if not os.environ.get("LANGCHAIN_API_KEY"):
-#    os.environ["LANGCHAIN_API_KEY"] = getpass.getpass()
 
 # Dictionary containing category names and corresponding directory paths
 category_dict = {
@@ -77,6 +71,7 @@ def create_model(model_name: str = 'llama2') -> ChatOllama:
 def create_prompt_template(prompt_text: str) -> ChatPromptTemplate:
     template = ChatPromptTemplate.from_messages([
         ('system', prompt_text),
+        MessagesPlaceholder(variable_name='chat_history'),
         ('human', '{input}')
     ])
     return template
