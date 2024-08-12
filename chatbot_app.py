@@ -1,12 +1,30 @@
 import streamlit as st
+from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.prompts import MessagesPlaceholder
 from nzminds_rag import * 
+from langfuse.callback import CallbackHandler
+
+# Setting up environment for Langfuse tracing
+
+langfuse_handler = CallbackHandler(
+    public_key="pk-lf-62c079db-78d0-4583-974c-b3a8d8f177d6",
+    secret_key="sk-lf-aaec7bf4-a47b-47cc-b65f-985c611f4853",
+    host="https://cloud.langfuse.com"
+)    
+
+
+
 
 # Function to trim the chat history. By default, it is untrimmed each time program is rerun so we have to trim each time
-def trim_history(history):
+def trim_history(history):  
     trimmed_history = []
-    while len(trimmed_history) < 5:    
-        for message in history:
-            trimmed_history.append(message)
+    for message in history:
+        if message['role'] == 'ai':
+            trimmed_history.append(AIMessage(content=message['content']))
+        elif message['role'] == 'human':
+            trimmed_history.append(HumanMessage(content=message['content']))
+    while len(trimmed_history) > 4:
+        del trimmed_history[0]
     return trimmed_history
 
 
@@ -44,16 +62,12 @@ sys_prompt_text = (
         "give the answer directly. "
         "Additionally, you will be provided extra context as supplementary information. "
         "If there is a clash between the retrieved context and the provided extra context, "
-        "prioritise the extra context. Furthermore, you will be provided chat history. "
-        "In the event that the user asks a question that references previous parts "
-        "of the conversation, go through the chat history, and taking into account the "
-        "chat history, context, and extra context, answer the question. "
+        "prioritise the extra context."
         "Don't say things like 'Extra context (not part of original answer)', or "
         "'According to the chat history' either."
         "\n\n"
         "Context: {context}\n"
         "Extra context: {extra_context}\n"
-        "Chat history: {chat_history}\n"
         "Keep in mind this as well, when they ask for the location of NZMinds: "
         """
             Singapore Head Office:
@@ -74,6 +88,9 @@ sys_prompt_text = (
             Ph: +91 9148140224 / +1 8884210410\n
             """
             "For email, NZMinds can be contacted via business@nzminds.com or info@nzminds.com."
+            "It is once again very important to keep in mind that your responses need "
+            "to be short. Do NOT give long explanations, and keep your explanations 2 sentences "
+            "at most. If you can help it, try to give an answer that is limited to 10 words."
     )
 
 
@@ -117,7 +134,8 @@ with st.chat_message(name='ai'):
         # Loading while carrying out the process (can take more than 7 min)
         with st.spinner('Generating response - this may take a while...'):    
             response = rag_chain.invoke({'input': query, 'extra_context': st.session_state['extra_ctx'],
-                                     'chat_history': trimmed_history})['answer']
+                                         'chat_history': trimmed_history},
+                                         config={'callbacks': [langfuse_handler]})['answer']
             
             st.markdown(response)
         # Adding chat history. This specific format is required so that while printing history, we can access each key
