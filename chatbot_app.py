@@ -6,11 +6,7 @@ from langfuse.callback import CallbackHandler
 
 # Setting up environment for Langfuse tracing
 
-langfuse_handler = CallbackHandler(
-    public_key="pk-lf-62c079db-78d0-4583-974c-b3a8d8f177d6",
-    secret_key="sk-lf-aaec7bf4-a47b-47cc-b65f-985c611f4853",
-    host="https://cloud.langfuse.com"
-)    
+
 
 
 
@@ -134,8 +130,7 @@ with st.chat_message(name='ai'):
         # Loading while carrying out the process (can take more than 7 min)
         with st.spinner('Generating response - this may take a while...'):    
             response = rag_chain.invoke({'input': query, 'extra_context': st.session_state['extra_ctx'],
-                                         'chat_history': trimmed_history},
-                                         config={'callbacks': [langfuse_handler]})['answer']
+                                         'chat_history': trimmed_history})['answer']
             
             st.markdown(response)
         # Adding chat history. This specific format is required so that while printing history, we can access each key
